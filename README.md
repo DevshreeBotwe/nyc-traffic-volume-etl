@@ -1,11 +1,1 @@
-This project is a one-script pipeline for NYC traffic counts. It:
-
-Downloads data from NYC Open Data’s API.
-
-Cleans it (clear column names, correct types, make a timestamp).
-
-Saves both raw and clean CSVs and a SQLite database.
-
-Analyzes it to find the Top 10 busiest road segments.
-
-Exports results as CSVs and charts in the output/ folder.
+This project is a one-script pipeline for NYC traffic counts. It downloads data from NYC Open Data’s API, cleans it (clear names, correct types, timestamp), and saves both raw and clean CSVs plus a SQLite database. It then analyzes the data to find the top 10 busiest road segments and monthly totals by borough, exporting results to the output folder.
