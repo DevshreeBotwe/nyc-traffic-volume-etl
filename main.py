@@ -16,14 +16,11 @@ resp = requests.get(URL, params=params, timeout=30)
 resp.raise_for_status()
 df = pd.DataFrame(resp.json())
 
-print("✅ Data Extracted! Shape:", df.shape)
-print("Script folder:", BASE_DIR)
-print("CWD at runtime:", Path.cwd())  # shows where Python started
 
 # ---- save ----
 out_path = DATA_DIR / "nyc_transportation.csv"
 df.to_csv(out_path, index=False)
-print("💾 Saved to:", out_path)
+print("Saved to:", out_path)
 
 
 
@@ -75,7 +72,7 @@ dir_map = {"NB":"northbound","SB":"southbound","EB":"eastbound","WB":"westbound"
 df["direction"] = df["direction"].str.upper().map(dir_map).fillna(df["direction"])
 
 # --- 5) Build datetime (15-min buckets) and year_month ---
-# Safely create a timestamp; rows missing any part become NaT
+
 dt = pd.to_datetime(
     dict(
         year=df["year"],
@@ -105,7 +102,7 @@ print("Columns now:", df.columns.tolist())
 
 # ----------------------------
 # 3) LOAD → SQLite
-# ----------------------------
+
 import sqlite3
 
 DB_PATH = DATA_DIR / "nyc_transportation.db"
@@ -113,7 +110,6 @@ TABLE   = "traffic_counts"
 
 # write to SQLite (replace table each run)
 with sqlite3.connect(DB_PATH) as conn:
-    # tip: add chunksize if your df is huge, e.g., chunksize=100_000
     df.to_sql(TABLE, conn, if_exists="replace", index=False)
     print(f"🗄️  Loaded {len(df):,} rows into {DB_PATH.name}.{TABLE}")
 
@@ -128,16 +124,15 @@ with sqlite3.connect(DB_PATH) as conn:
         try:
             conn.execute(ddl)
         except sqlite3.OperationalError:
-            # column not present in your pull; skip silently
             pass
 
-    # quick sanity checks
+    # quick sanity checks - 50,000 rows
     total_rows = conn.execute(f"SELECT COUNT(*) FROM {TABLE}").fetchone()[0]
     print("Rows in table:", total_rows)
 
  # ----------------------------
 # 4) ANALYZE → Top 10 busiest segments
-# ----------------------------
+
 import pandas as pd
 import sqlite3
 import matplotlib.pyplot as plt
@@ -204,12 +199,10 @@ if not top10.empty:
     ax.set_xlabel("Total Volume")
     ax.set_title("Top 10 Busiest NYC Road Segments (by total volume)")
 
-    # optional: show values at end of bars
     for i, v in enumerate(top10["total_volume"]):
         ax.text(v, i, f" {int(v):,}", va="center", fontsize=8)
 
     out_png = OUT_DIR / "top10_busiest_segments.png"
     fig.savefig(out_png, dpi=160, bbox_inches="tight")
-    print("📈Chart saved ->", out_png)
 else:
-    print(" No results returned; check data / filters.")
+    print(" No results returned - check data.")
